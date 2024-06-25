@@ -1,15 +1,18 @@
-import asyncio
+from apis import register_blueprints
+from db import init_mongo
+from quart import Quart
 
-import uvicorn
-from asgi import create_asgi_application
+app = Quart(__name__)
 
 
-async def main():
-    app = await create_asgi_application()
-    config = uvicorn.Config(app, host="0.0.0.0", port=5000, reload=True)
-    server = uvicorn.Server(config)
-    await server.serve()
+@app.before_serving
+async def startup():
+    await init_mongo()
 
+
+register_blueprints(app)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    import uvicorn
+
+    uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=True)
