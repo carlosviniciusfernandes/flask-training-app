@@ -1,44 +1,46 @@
 from typing import Optional
 
+from crud import get_object_or_404, update_object
 from models import Review, User
 from pydantic import BaseModel
 from quart import Blueprint, Response, jsonify, request
+from werkzeug.exceptions import NotFound
 
 reviews_bp = Blueprint("reviews", __name__)
-
-
-class AddReviewPayload(Review): ...
 
 
 class UpdateReviewPayload(BaseModel):
     description: Optional[str] = None
 
 
+def _get_review_from_user(user: User, review_id: str) -> Review:
+    review = user.reviews.get(review_id)
+    if not review:
+        raise NotFound("Not Found")
+    return review
+
+
 @reviews_bp.post("/users/<user_id>/reviews/add")
 async def add_review(user_id: str) -> tuple[Response, int]:
     body = await request.get_json()
-    payload = AddReviewPayload(**body)
+    new_review = Review(**body)
 
-    user = await User.get(user_id)
-    if not user:
-        return jsonify({"message": "ValidationError", "extra": {"user_id": f"No user was found"}}), 400
-
-    user.reviews.append(payload.review)
+    user = await get_object_or_404(User, user_id)
+    review_id = int(new_review.created_at.timestamp())
+    if not user.reviews:
+        user.reviews = {review_id: new_review}
+    else:
+        user.reviews[review_id] = new_review
     await user.save()
+
     return jsonify(user.model_dump()), 201
 
 
 @reviews_bp.get("/users/<user_id>/reviews/<review_id>")
 async def get_review(user_id: str, review_id: str) -> tuple[Response, int]:
-    user = await User.get(user_id)
-    if not user:
-        return jsonify({"message": "ValidationError", "extra": {"user_id": f"No user was found"}}), 400
-
-    review = user.reviews.get(review_id)
-    if not review:
-        return jsonify({"message": "Not Found"}), 404
-
-    return jsonify(review.model_dump()), 201
+    user = await get_object_or_404(User, user_id)
+    review = _get_review_from_user(user, review_id)
+    return jsonify(review.model_dump()), 200
 
 
 @reviews_bp.patch("/users/<user_id>/reviews/<review_id>")
@@ -46,29 +48,20 @@ async def update_review(user_id: str, review_id: str) -> tuple[Response, int]:
     body = await request.get_json()
     payload = UpdateReviewPayload(**body)
 
-    user = await User.get(user_id)
-    if not user:
-        return jsonify({"message": "ValidationError", "extra": {"user_id": f"No user was found"}}), 400
-
-    review = user.reviews.get(review_id)
-    if not review:
-        return jsonify({"message": "Not Found"}), 404
-
-    for key, value in payload.model_dump(exclude_none=True):
-        setattr(review, key, value)
+    user = await get_object_or_404(User, user_id)
+    review = _get_review_from_user(user, review_id)
+    user.reviews[int(review.created_at.timestamp())] = {"description": payload.description}
     await user.save()
+
     return jsonify(user.model_dump()), 200
 
 
 @reviews_bp.delete("/users/<user_id>/reviews/<review_id>")
 async def delete_review(user_id: str, review_id: str) -> tuple[Response, int]:
-    user = await User.get(user_id)
-    if not user:
-        return jsonify({"message": "ValidationError", "extra": {"user_id": f"No user was found"}}), 400
+    user = await get_object_or_404(User, user_id)
+    review = _get_review_from_user(user, review_id)
 
-    review = user.reviews.get(review_id)
-    if not review:
-        return jsonify({"message": "Not Found"}), 404
-
+    del user.reviews[review_id]
     await user.save()
+
     return jsonify(None), 204

@@ -13,4 +13,4 @@ class Review(BaseModel):
 class User(Document):
     first_name: str
     last_name: str
-    reviews: Optional[Dict[str, Review]] = {}
+    reviews: Optional[Dict[str, Review]] = None

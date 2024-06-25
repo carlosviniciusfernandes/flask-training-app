@@ -1,5 +1,6 @@
 from apis import register_blueprints
 from db import init_mongo
+from exceptions import register_exception_handlers
 from quart import Quart
 
 app = Quart(__name__)
@@ -11,6 +12,8 @@ async def startup():
 
 
 register_blueprints(app)
+register_exception_handlers(app)
+
 
 if __name__ == "__main__":
     import uvicorn
