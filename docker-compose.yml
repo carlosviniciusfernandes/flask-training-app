@@ -1,0 +1,38 @@
+networks:
+  default:
+    name: flask_network
+
+services:
+  flask:
+    container_name: flask
+    build:
+      context: ./backend
+      dockerfile: .Dockerfile
+    working_dir: /backend/src
+    entrypoint: /backend/scripts/entrypoint.sh
+    volumes:
+      - ./backend:/backend
+    environment:
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - MONGO_USER=atlas
+      - MONGO_PASSWORD=bearerOfTheHeavens
+    ports:
+      - 5000:5000
+    depends_on:
+      - mongodb
+
+  mongodb:
+    container_name: mongodb
+    image: mongodb/mongodb-community-server:latest
+    # volumes:
+    #   - ./data:/data/db
+      # - type: bind
+      #   source: ./data
+      #   target: /data/db
+    environment:
+      - MONGODB_INITDB_ROOT_USERNAME=atlas
+      - MONGODB_INITDB_ROOT_PASSWORD=bearerOfTheHeavens
+    ports:
+      - 27017:27017
+

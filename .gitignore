@@ -1,4 +1,2 @@
-*
-!.gitignore
-!launch.json
-!settings.json
+db
+**/__pycache__/**
