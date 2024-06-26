@@ -5,14 +5,13 @@ from quart import Quart
 
 app = Quart(__name__)
 
+register_blueprints(app)
+register_exception_handlers(app)
+
 
 @app.before_serving
 async def startup():
     await init_mongo()
-
-
-register_blueprints(app)
-register_exception_handlers(app)
 
 
 if __name__ == "__main__":

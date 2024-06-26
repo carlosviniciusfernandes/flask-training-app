@@ -15,6 +15,12 @@ pydantic = "^2.7.4"
 asgiref = "^3.8.1"
 
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.2"
+pytest-asyncio = "^0.23.7"
+mongomock = "^4.1.2"
+mongomock-motor = "^0.0.30"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

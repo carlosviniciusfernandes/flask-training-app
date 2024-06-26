@@ -14,3 +14,6 @@ class User(Document):
     first_name: str
     last_name: str
     reviews: Optional[Dict[str, Review]] = None
+
+    # TODO Read on Relations/Link for reviews
+    # ref: https://dev.to/romanright/announcing-beanie-odm-18-relations-cache-actions-and-more-24ef
